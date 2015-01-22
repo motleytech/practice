@@ -1,3 +1,19 @@
+# install sublime
+echo -e "installing sublime"
+cd /tmp
+rm -rf /tmp/sublime
+sudo rm -rf /usr/local/bin/sublime 
+wget http://c758482.r82.cf2.rackcdn.com/Sublime%20Text%202.0.2%20x64.tar.bz2 -O sublime.tar.bz2
+tar -xvjf sublime.tar.bz2
+mv Sublime\ Text\ 2 sublime
+sudo mv sublime /usr/local/bin/sublime
+
+if grep -q "alias sublime" ~/.bashrc; then
+    echo "alias sublime already exists"
+else
+    echo "alias sublime=/usr/local/bin/sublime/sublime_text" >> ~/.bashrc
+fi
+
 # install chrome
 echo -e "\n\n"
 echo -e "installing chrome"
@@ -45,5 +61,4 @@ sudo apt-get install -y acroread
 
 echo -e "\n\n"
 echo -e "done"
-
 

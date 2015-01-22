@@ -28,6 +28,7 @@ git config --global difftool.prompt false
 git config --global diff.tool diffuse
 git config --global color.ui true
 
+
 # install python related stuff
 echo -e "\n\n"
 echo -e "installing python stuff"
@@ -60,3 +61,4 @@ sudo apt-get -y autoremove
 
 echo -e "\n\n"
 echo -e "done"
+
