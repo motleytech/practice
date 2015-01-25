@@ -37,6 +37,10 @@ package_info = [
 
     ('chrome',
      {
+         'options':{
+             'ignore_result': True,
+             'verify_install': 'which google-chrome',
+             },
          'exists': [
              ('which google-chrome', 0),
              ],
@@ -84,6 +88,9 @@ package_info = [
     }),
 
     ('restricted-extras (fonts)', {
+        'options': {
+            'stdout_redirect': False,
+            },
         'exists': [
             ('dpkg -s ubuntu-restricted-extras', 0)
             ],
@@ -93,6 +100,9 @@ package_info = [
     }),
 
     ('adobe reader', {
+        'options': {
+            'stdout_redirect': False,
+            },
         'exists': [
             ('dpkg -s acroread', 0),
             ],

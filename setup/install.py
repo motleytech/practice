@@ -30,20 +30,30 @@ def check_result(result, cmd, exit_on_error=True):
         return False
 
 
-def run_command(cmd, exit_on_error=True, check_res=True):
+def run_command(cmd,
+                exit_on_error=True,
+                check_res=True,
+                stdout_redirect=True):
     logging.info("Running command \n{}{}{}".format(bcolors.OKBLUE, cmd, bcolors.ENDC))
-    if DEBUG is False:
+    if (stdout_redirect is True) and (DEBUG is False):
         cmd += " > /dev/null"
+
     result = os.system(cmd)
     if check_res is True:
         return check_result(result, cmd, exit_on_error)
     return result
 
 
-def run_commands(cmds, exit_on_error=True, check_res=True):
+def run_commands(cmds,
+                 exit_on_error=True,
+                 check_res=True,
+                 stdout_redirect=True):
     result = True
     for cmd in cmds:
-        result = result and run_command(cmd, exit_on_error, check_res)
+        result = result and run_command(cmd,
+                                        exit_on_error,
+                                        check_res,
+                                        stdout_redirect)
     return result
 
 
@@ -61,10 +71,20 @@ def check_exists(pkg, info):
 
 def install_package(pkg, info):
     cmds = info.get('install', None)
+    options = info.get('options', {})
+    stdout_redirect = options.get('stdout_redirect', True)
+    ignore_result = options.get('ignore_result', False)
+    verify_install = options.get('verify_install', None)
+
     if (cmds is None) or (cmds == []):
         return False
 
-    run_commands(cmds)
+    run_commands(cmds,
+                 exit_on_error=(not ignore_result),
+                 stdout_redirect=stdout_redirect)
+
+    if verify_install is not None:
+        run_command(verify_install)
 
 
 def run_install():
