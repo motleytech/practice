@@ -1,3 +1,4 @@
+VENV_FOLDER = '~/.virtualenvs'
 VENV_NAME = 'cms'
 APT_GET_DELAY = 24*60*60  # in seconds
 
@@ -129,6 +130,12 @@ package_info = [
             ],
         'install': [
             'sudo apt-get install -y diffuse',
+            '''
+            if grep -q "alias diffuse" ~/.bashrc; then
+                echo "alias diffuse already exists"
+            else
+                echo "alias diffuse='/usr/bin/python /usr/bin/diffuse'" >> ~/.bashrc
+            fi''',
             ],
     }),
 
@@ -300,16 +307,16 @@ package_info = [
 
     ('create-virt-env', {
         'exists': [
-            ('ls $WORKON_HOME | grep -q %s' % VENV_NAME, 0)
+            ('[ -d %s/%s ]' % (VENV_FOLDER, VENV_NAME), 0)
             ],
         'install': [
-            'cd $WORKON_HOME; virtualenv %s' % VENV_NAME,
+            'cd %s; virtualenv %s' % (VENV_FOLDER, VENV_NAME),
             ],
     }),
 
     ('install-virt-pkgs', {
         'install': [
-            '/bin/bash -c "source $WORKON_HOME/%s/bin/activate; pip install -r requirements_cms.txt"' % VENV_NAME,
+            '/bin/bash -c "source %s/%s/bin/activate; pip install -r requirements_cms.txt"' % (VENV_FOLDER, VENV_NAME),
             ],
     }),
 
