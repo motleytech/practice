@@ -50,10 +50,11 @@ def run_commands(cmds,
                  stdout_redirect=True):
     result = True
     for cmd in cmds:
-        result = result and run_command(cmd,
-                                        exit_on_error,
-                                        check_res,
-                                        stdout_redirect)
+        rv = run_command(cmd,
+                         exit_on_error,
+                         check_res,
+                         stdout_redirect)
+        result = result and rv
     return result
 
 

@@ -310,7 +310,7 @@ package_info = [
             ('[ -d %s/%s ]' % (VENV_FOLDER, VENV_NAME), 0)
             ],
         'install': [
-            'cd %s; virtualenv %s' % (VENV_FOLDER, VENV_NAME),
+            'mkdir -p %s; cd %s; virtualenv %s' % (VENV_FOLDER, VENV_FOLDER, VENV_NAME),
             ],
     }),
 
