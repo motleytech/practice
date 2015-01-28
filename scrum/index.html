@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+	<head>
+		<script src="board/static/board/vendor/jquery.js"></script>
+	</head>
+	<body>
+		<h1>Websocket example</h1>
+		<form id="myform" onsubmit="return myfunction();">
+			Enter name: <input type="text" name="name">
+			<input type="submit">
+		</form>
+
+		<script>
+			var socket = new WebSocket("ws://localhost:8080/223")
+			socket.onopen = function () {
+				console.log("connection created");
+			}
+			socket.onmessage = function (msg) {
+				console.log("new message: " + msg.data);
+				$("#myform :input[name='name']").val(msg.data);
+			}
+
+			function myfunction () {
+				msg = $("#myform :input[name='name']").val();
+				socket.send(msg);
+				return false;
+			}
+		</script>
+	</body>
+</html>
