@@ -156,7 +156,8 @@ d3.csv("sp500.csv", type, function(error, data) {
 });
 
 function brushed() {
-  x.domain(brush.empty() ? x2.domain() : brush.extent());
+  var dom = brush.empty() ? x2.domain() : brush.extent();
+  x.domain(dom);
   focus.select(".area").attr("d", area);
   focus.select(".x.axis").call(xAxis);
 }
