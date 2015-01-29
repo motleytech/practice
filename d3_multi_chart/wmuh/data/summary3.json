@@ -73,19 +73,19 @@
         "review_name": "review 3",
         "data" : [
             {
-                "time": 2,
+                "time": 22,
                 "count": 12,
                 "img": "/cat-icon.png",
                 "text": "random-text"
             },
             {
-                "time": 5,
+                "time": 54,
                 "count": 12,
                 "img": "/cat-icon.png",
                 "text": "random-text"
             },
             {
-                "time": 32,
+                "time": 132,
                 "count": 12,
                 "img": "/cat-icon.png",
                 "text": "random-text"
@@ -104,6 +104,12 @@
             },
             {
                 "time": 434,
+                "count": 12,
+                "img": "/cat-icon.png",
+                "text": "random-text"
+            },
+            {
+                "time": 834,
                 "count": 12,
                 "img": "/cat-icon.png",
                 "text": "random-text"
