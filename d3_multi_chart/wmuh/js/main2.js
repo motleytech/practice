@@ -15,20 +15,6 @@ function getMaxElements2(d) {
 }
 
 
-function getBounds1(d, paddingFactor) {
-  var b = {};
-  for (var i=0; i < d.length; i++) {
-    b[i] = getBounds(d[i], paddingFactor);
-  }
-  return b;
-}
-
-function getBounds2(d, paddingFactor) {
-  var b = {};
-  b[0] = getBounds(d, paddingFactor);;
-  return b;
-}
-
 function getBounds(d, paddingFactor) {
   paddingFactor = typeof paddingFactor !== 'undefined' ? paddingFactor : 1;
 
@@ -53,15 +39,11 @@ function addDiv(container, newid) {
     objTo.appendChild(newdiv);
 };
 
-function getter1(data, cg, item, attr) {
-  var ds = data[cg];
-  if (ds === undefined) {
-    return undefined;
-  }
-  return getter2(ds, cg, item, attr);
+function getter1(data, item, attr) {
+  return getter2(data, item, attr);
 };
 
-function getter2(data, cg, item, attr) {
+function getter2(data, item, attr) {
   var ditem = data.data[item];
   if (ditem === undefined) {
     return undefined;
@@ -69,27 +51,39 @@ function getter2(data, cg, item, attr) {
   return ditem[attr];
 };
 
-d3.json('data/summary3.json', function(data) {
+function get_info_text(data, ix, options) {
+  return "Info: " + options.getter(data, ix, 'text') + " (" + options.getter(data, ix, 'time') + ")"
+}
+
+
+d3.json('data/summary3.json', function(input_data) {
+
+  function show_data_zoom(ident) {
+    new_data = input_data[ident];
+    zoom_graph.show_graph(new_data);
+  }
+
   var options = {
     "build_menu": false,
     "multi_graph": true,
     "element": "#chart",
     "width": 800,
-    "height": 300,
+    "height": 250,
     "getter": getter1,
-    "suffix": '',
-    "xlabelx": 400,
-    "xlabely": 280,
-    "getMaxEls": getMaxElements1,
-    "getBounds": getBounds1,
-    "translatex": 50,
+    "id_suffix": '',
+    "max_points": 20,
+    "getBounds": getBounds,
+    "get_info_text": get_info_text,
+    "translatex": 20,
     "radius": 12,
-    "show_time": true,
-    "show_info": true
+    "show_xaxis": true,
+    "show_info": true,
+    "line_width": "2px",
+    "ident": 0
   };
-  var zoom_graph = makeChart(data, options);
+  var zoom_graph = makeChart(input_data[0], options);
 
-  for (var ix=0; ix<data.length; ix++) {
+  for (var ix=0; ix<input_data.length; ix++) {
     // add a div to chart list
     var divname = "chart-" + ix;
     addDiv("chart-list", divname);
@@ -98,113 +92,101 @@ d3.json('data/summary3.json', function(data) {
       "build_menu": false,
       "multi_graph": false,
       "element": ("#" + divname),
-      "width": 300,
-      "height": 100,
+      "width": 200,
+      "height": 20,
       "getter": getter2,
-      "suffix": ("" + ix),
-      "xlabelx": 200,
-      "xlabely": 130,
-      "getMaxEls": getMaxElements2,
-      "getBounds": getBounds2,
-      "translatex": 20,
-      "radius": 5,
-      "show_time": false,
+      "id_suffix": ("" + ix),
+      "max_points": 20,
+      "getBounds": getBounds,
+      "translatex": 10,
+      "radius": 4,
+      "show_xaxis": false,
       "show_info": false,
-      "link_to_multi_graph": zoom_graph,
-      "graph_num": ix
+      "callback_on_click": show_data_zoom,
+      "graph_num": ix,
+      "line_width": "1px",
+      "ident": ix
     };
 
-    makeChart(data[ix], options2);
+    makeChart(input_data[ix], options2);
   }
 });
 
 var makeChart = function (data, options) {
   var xAxis = 'Timeline';
-  var currentGraph = 0;
-  var maxElements = options.getMaxEls(data);
+  var maxElements = options.max_points;
 
-  var bounds = options.getBounds(data, 1.02);
+  var bounds = options.getBounds(data, 1.0);
 
   // SVG AND D3 STUFF
   var svg = d3.select(options.element)
     .append("svg")
     .attr("width", options.width)
     .attr("height", options.height);
+
   var xScale, yScale;
 
-  if (options.link_to_multi_graph !== undefined) {
-    svg.on('click', function (d) { options.link_to_multi_graph['show_graph'](options.graph_num); });
+  if (options.callback_on_click !== undefined) {
+    svg.on('click', function (d) { options.callback_on_click(options.ident); });
   }
 
   svg.append('g')
-    .classed('chart' + options.suffix, true)
+    .classed('chart' + options.id_suffix, true)
     .attr('transform', 'translate(' + options.translatex + ', 0)');
 
-  // Build menus
-  if (options.build_menu) {
-    var xAxisOptions;
-    if (options.multi_graph) {
-      xAxisOptions = []
-      for (var ix=0; ix < data.length; ix++) {
-        xAxisOptions.push("Graph " + (ix + 1));
-      }
-    }
-    d3.select('#x-axis-menu')
-      .selectAll('li')
-      .data(xAxisOptions)
-      .enter()
-      .append('li')
-      .text(function(d) {return d;})
-      .classed('selected', function(d) {
-        return d === ("Graph " + (currentGraph + 1));
-      })
-      .on('click', function(d) {
-        show_graph(parseInt(d.split(" ")[1]) - 1);
-      });
-  }
-
-  function show_graph(gnum) {
-    currentGraph = gnum;
+  function show_graph(new_data) {
+    data = new_data;
     updateChart();
-    updateMenus();
   };
 
   // Point info
   if (options.show_info) {
-    d3.select('svg g.chart' + options.suffix)
+    d3.select('svg g.chart' + options.id_suffix)
       .append('text')
-      .attr({'id': 'pointInfo', 'x': 10, 'y': 60, 'text-anchor': 'left'})
+      .attr({'id': 'pointInfo' + options.id_suffix, 'x': 10, 'y': 60, 'text-anchor': 'left'})
       .style({'font-size': '20px', 'font-weight': 'bold', 'fill': '#555'});
   }
 
   // background line (to appear behind points)
-  d3.select('svg g.chart' + options.suffix)
+  d3.select('svg g.chart' + options.id_suffix)
     .append('line')
-    .attr('id', 'backline' + options.suffix);
+    .attr('id', 'backline' + options.id_suffix);
 
   // X Axis label
-  if (options.show_time) {
-    d3.select('svg g.chart' + options.suffix)
+  if (options.show_xaxis) {
+    d3.select('svg g.chart' + options.id_suffix)
       .append('text')
-      .attr({'id': 'xLabel' + options.suffix, 'x': options.width/2, 'y': options.height - 20, 'text-anchor': 'middle'})
-      .text("Review " + currentGraph);
+      .attr({'id': 'xLabel' + options.id_suffix, 'x': options.width/2, 'y': options.height - 20, 'text-anchor': 'middle'})
+      .text("Timeline");
+  }
+
+  function updateScales() {
+    xScale = d3.scale.linear()
+                    .domain([bounds.min, bounds.max])
+                    .range([0, options.width - 2*options.translatex]);  // TODO: fix these numbers
+
+    yScale = d3.scale.linear()
+                    .domain([-10, 10])
+                    .range([options.height, 0]);  // TODO: fix these numbers
   }
 
   // Render points
   updateScales();
+
   var pointColour = d3.scale.category20b();
   var placeholderArray = Array(maxElements);
+
   for (var ix=0; ix < placeholderArray.length; ix++) {
     placeholderArray[ix] = ix;
   }
 
-  var circles = d3.select('svg g.chart' + options.suffix)
+  var circles = d3.select('svg g.chart' + options.id_suffix)
         .selectAll('circle')
         .data(placeholderArray)
         .enter()
         .append('circle')
         .attr('cx', function(d) {
-          res = options.getter(data, currentGraph, d, 'time');
+          res = options.getter(data, d, 'time');
           return (res === undefined) ? d3.select(this).attr('cx') : xScale(res);
         })
         .attr('cy', function(d) {
@@ -216,85 +198,18 @@ var makeChart = function (data, options) {
   if (options.show_info) {
     circles.style('cursor', 'pointer')
       .on('mouseover', function(d) {
-        var dtext = "Info: " + options.getter(data, currentGraph, d, 'text') + " (" + options.getter(data, currentGraph, d, 'time') + ")";
-        d3.select('svg g.chart' + options.suffix + ' #pointInfo')
+        var dtext = options.get_info_text(data, d, options);
+        d3.select('svg g.chart' + options.id_suffix + ' #pointInfo' + options.id_suffix)
           .text(dtext)
           .transition()
           .style('opacity', 1);
       })
       .on('mouseout', function(d) {
-        d3.select('svg g.chart' + options.suffix + ' #pointInfo')
+        d3.select('svg g.chart' + options.id_suffix + ' #pointInfo' + options.id_suffix)
           .transition()
           .duration(500)
           .style('opacity', 0);
       });
-  }
-
-  updateChart(true);
-  updateMenus();
-
-  // Render axes
-  if (options.show_time) {
-    d3.select('svg g.chart' + options.suffix)
-      .append("g")
-      .attr('transform', 'translate(0, ' + (options.height*0.85 - 20) + ')')
-      .attr('id', 'xAxis' + options.suffix)
-      .call(makeXAxis);
-  }
-
-  //// RENDERING FUNCTIONS
-  function updateChart(init) {
-    updateScales();
-
-    d3.select('svg g.chart' + options.suffix)
-      .selectAll('circle')
-      .transition()
-      .duration(400)
-      .ease('quad-out')
-      .attr('cx', function(d) {
-        res = options.getter(data, currentGraph, d, 'time');
-        return (res === undefined) ? d3.select(this).attr('cx') : xScale(res);
-      })
-      .attr('cy', function(d) {
-        return yScale(0);
-      })
-      .attr('r', function(d) {
-        res = options.getter(data, currentGraph, d, 'time');
-        return (res === undefined) ? 0 : options.radius;
-      });
-
-    // Also update the axes
-    if (options.show_time) {
-      d3.select('#xAxis' + options.suffix)
-        .transition()
-        .call(makeXAxis);
-
-      d3.select('#xLabel' + options.suffix)
-        .text(xAxis);
-    }
-
-    // Update back line
-    var mxx, mnx;
-    mxx = bounds[currentGraph].max;
-    mnx = bounds[currentGraph].min;
-
-    // Fade in
-    d3.select('#backline' + options.suffix)
-      .style('opacity', 0)
-      .attr({'x1': xScale(mnx), 'y1': yScale(0), 'x2': xScale(mxx), 'y2': yScale(0)})
-      .transition()
-      .duration(500)
-      .style('opacity', 1);
-  }
-
-  function updateScales() {
-    xScale = d3.scale.linear()
-                    .domain([bounds[currentGraph].min, bounds[currentGraph].max])
-                    .range([20, options.width - 70]);  // TODO: fix these numbers
-
-    yScale = d3.scale.linear()
-                    .domain([-10, 10])
-                    .range([options.height - 20, 40]);  // TODO: fix these numbers
   }
 
   function makeXAxis(s) {
@@ -303,20 +218,67 @@ var makeChart = function (data, options) {
       .orient("bottom"));
   }
 
-  function updateMenus() {
-    if (options.build_menu) {
-      d3.select('#x-axis-menu')
-        .selectAll('li')
-        .classed('selected', function(d) {
-          return d === ("Graph " + (currentGraph + 1));
-        });
-    };
+  // Render axes
+  if (options.show_xaxis) {
+    d3.select('svg g.chart' + options.id_suffix)
+      .append("g")
+      .attr('transform', 'translate(0, ' + (options.height - 50) + ')')
+      .attr('id', 'xAxis' + options.id_suffix)
+      .call(makeXAxis);
   }
 
-  return {
-    'show_graph': show_graph
+  //// RENDERING FUNCTIONS
+  function updateChart(init) {
+    if (!init) {
+      bounds = options.getBounds(data, 1.0);
+      updateScales();
+    }
+
+    d3.select('svg g.chart' + options.id_suffix)
+      .selectAll('circle')
+      .transition()
+      .duration(400)
+      .ease('quad-out')
+      .attr('cx', function(d) {
+        res = options.getter(data, d, 'time');
+        return (res === undefined) ? d3.select(this).attr('cx') : xScale(res);
+      })
+      .attr('cy', function(d) {
+        return yScale(0);
+      })
+      .attr('r', function(d) {
+        res = options.getter(data, d, 'time');
+        return (res === undefined) ? 0 : options.radius;
+      })
+      .attr('fill', function(d, i) { return pointColour(i); });
+
+    // Also update the axes
+    if (options.show_xaxis) {
+      d3.select('#xAxis' + options.id_suffix)
+        .transition()
+        .call(makeXAxis);
+
+      d3.select('#xLabel' + options.id_suffix)
+        .text(xAxis);
+    }
+
+    // Update back line
+    var mxx, mnx;
+    mxx = bounds.max;
+    mnx = bounds.min;
+
+    // Fade in
+    d3.select('#backline' + options.id_suffix)
+      .style('opacity', 0)
+      .attr({'x1': xScale(mnx), 'y1': yScale(0), 'x2': xScale(mxx), 'y2': yScale(0)})
+      .transition()
+      .duration(500)
+      .style('opacity', 1)
+      .style('stroke-width', options.line_width);
   }
 
+  updateChart(true);
+  return { 'show_graph': show_graph };
 };
 
 
