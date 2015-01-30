@@ -1,20 +1,5 @@
 // HELPERS
 
-function getMaxElements1(d) {
-  var nels = [];
-
-  for (var i=0; i < d.length; i++) {
-    nels.push(d[i].data.length);
-  }
-
-  return _.max(nels);
-}
-
-function getMaxElements2(d) {
-  return d.data.length;
-}
-
-
 function getBounds(d, paddingFactor) {
   paddingFactor = typeof paddingFactor !== 'undefined' ? paddingFactor : 1;
 
@@ -78,6 +63,8 @@ d3.json('data/summary3.json', function(input_data) {
     "radius": 12,
     "show_xaxis": true,
     "show_info": true,
+    "tick_width": 4,
+    "tick_height": 20,
     "line_width": "2px",
     "ident": 0
   };
@@ -101,6 +88,8 @@ d3.json('data/summary3.json', function(input_data) {
       "translatex": 10,
       "radius": 4,
       "show_xaxis": false,
+      "tick_width": 2,
+      "tick_height": 10,
       "show_info": false,
       "callback_on_click": show_data_zoom,
       "graph_num": ix,
@@ -194,16 +183,17 @@ var makeChart = function (data, options) {
   }
 
   var circles = d3.select('svg g.chart' + options.id_suffix)
-        .selectAll('circle')
+        .selectAll('rect')
         .data(placeholderArray)
         .enter()
-        .append('circle')
-        .attr('cx', function(d) {
+        .append('rect')
+        .attr({'width': options.tick_width, 'height': options.tick_height})
+        .attr('x', function(d) {
           var res = options.getter(data, d, 'time');
-          return (res === undefined) ? d3.select(this).attr('cx') : xScale(res);
+          return (res === undefined) ? d3.select(this).attr('x') : xScale(res);
         })
-        .attr('cy', function(d) {
-          return yScale(0);
+        .attr('y', function(d) {
+          return yScale(0) - options.tick_height/2;
         })
         .attr('fill', function(d, i) {return pointColour(i);});
 
@@ -261,22 +251,17 @@ var makeChart = function (data, options) {
     }
 
     d3.select('svg g.chart' + options.id_suffix)
-      .selectAll('circle')
+      .selectAll('rect')
       .transition()
       .duration(400)
       .ease('quad-out')
-      .attr('cx', function(d) {
+      .attr('x', function(d) {
         res = options.getter(data, d, 'time');
-        return (res === undefined) ? d3.select(this).attr('cx') : xScale(res);
+        return (res === undefined) ? d3.select(this).attr('x') : xScale(res);
       })
-      .attr('cy', function(d) {
-        return yScale(0);
-      })
-      .attr('r', function(d) {
-        res = options.getter(data, d, 'time');
-        return (res === undefined) ? 0 : options.radius;
-      })
-      .attr('fill', function(d, i) { return pointColour(i); });
+      .attr('y', function(d) {
+          return yScale(0) - options.tick_height/2;
+      });
 
     // Also update the axes
     if (options.show_xaxis) {
