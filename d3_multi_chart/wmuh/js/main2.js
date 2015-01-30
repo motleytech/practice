@@ -147,6 +147,19 @@ var makeChart = function (data, options) {
       .style({'font-size': '20px', 'font-weight': 'bold', 'fill': '#555'});
   }
 
+  // displayed image
+  if (options.show_info) {
+    svg.selectAll("image").data([0]).enter()
+      .append('svg:image')
+      .attr({'id': 'disp_image' + options.id_suffix,
+          'x': 50,
+          'y': 100,
+          'xlink:href': 'cat-icon.png',
+          'width': 50,
+          'height': 50})
+      .style({'opacity': 0});
+  }
+
   // background line (to appear behind points)
   d3.select('svg g.chart' + options.id_suffix)
     .append('line')
@@ -186,7 +199,7 @@ var makeChart = function (data, options) {
         .enter()
         .append('circle')
         .attr('cx', function(d) {
-          res = options.getter(data, d, 'time');
+          var res = options.getter(data, d, 'time');
           return (res === undefined) ? d3.select(this).attr('cx') : xScale(res);
         })
         .attr('cy', function(d) {
@@ -203,12 +216,25 @@ var makeChart = function (data, options) {
           .text(dtext)
           .transition()
           .style('opacity', 1);
+
+        var x, img;
+        x = xScale(options.getter(data, d, 'time'));
+        img = options.getter(data, d, 'img');
+
+        d3.select('#disp_image' + options.id_suffix)
+          .style('opacity', 1)
+          .attr({'x': x-5,
+                 'y': yScale(5),
+                 'xlink:href': img});
       })
       .on('mouseout', function(d) {
         d3.select('svg g.chart' + options.id_suffix + ' #pointInfo' + options.id_suffix)
           .transition()
           .duration(500)
           .style('opacity', 0);
+        d3.select('#disp_image' + options.id_suffix)
+          .style('opacity', 0);
+
       });
   }
 
