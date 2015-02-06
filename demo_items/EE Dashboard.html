@@ -163,6 +163,10 @@
           <div class="form-inline well">
             <div id="chart-zoom"><svg width="1000" height="200"><g class="chartzoomed" transform="translate(20, 0)"><text id="pointInfozoomed" x="10" y="10" text-anchor="left" style="font-size: 10px; font-weight: bold; fill: rgb(85, 85, 85);"></text><line id="backlinezoomed" x1="0" y1="100" x2="960" y2="100" style="stroke-width: 4px; stroke: rgb(85, 85, 85); opacity: 1;"></line><text id="xLabelzoomed" x="500" y="185" text-anchor="middle">Timeline (in minutes)</text><rect width="15" height="90" x="0" y="55" fill="#393b79" style="cursor: pointer;"></rect><rect width="15" height="90" x="120" y="55" fill="#5254a3" style="cursor: pointer;"></rect><rect width="15" height="90" x="240" y="55" fill="#6b6ecf" style="cursor: pointer;"></rect><rect width="15" height="90" x="701.5384615384617" y="55" fill="#9c9ede" style="cursor: pointer;"></rect><rect width="15" height="90" x="960" y="55" fill="#637939" style="cursor: pointer;"></rect><rect width="15" height="0" y="55" fill="#8ca252" style="cursor: pointer;"></rect><rect width="15" height="0" y="55" fill="#b5cf6b" style="cursor: pointer;"></rect><rect width="15" height="0" y="55" fill="#cedb9c" style="cursor: pointer;"></rect><rect width="15" height="0" y="55" fill="#8c6d31" style="cursor: pointer;"></rect><rect width="15" height="0" y="55" fill="#bd9e39" style="cursor: pointer;"></rect><rect width="15" height="0" y="55" fill="#e7ba52" style="cursor: pointer;"></rect><rect width="15" height="0" y="55" fill="#e7cb94" style="cursor: pointer;"></rect><rect width="15" height="0" y="55" fill="#843c39" style="cursor: pointer;"></rect><rect width="15" height="0" y="55" fill="#ad494a" style="cursor: pointer;"></rect><rect width="15" height="0" y="55" fill="#d6616b" style="cursor: pointer;"></rect><rect width="15" height="0" y="55" fill="#e7969c" style="cursor: pointer;"></rect><rect width="15" height="0" y="55" fill="#7b4173" style="cursor: pointer;"></rect><rect width="15" height="0" y="55" fill="#a55194" style="cursor: pointer;"></rect><rect width="15" height="0" y="55" fill="#ce6dbd" style="cursor: pointer;"></rect><rect width="15" height="0" y="55" fill="#de9ed6" style="cursor: pointer;"></rect><g transform="translate(0, 150)" id="xAxiszoomed"><g class="tick major" transform="translate(0,0)" style="opacity: 1;"><line y2="6" x2="0"></line><text y="9" x="0" dy=".71em" style="text-anchor: middle;">0</text></g><g class="tick major" transform="translate(92.3076923076923,0)" style="opacity: 1;"><line y2="6" x2="0"></line><text y="9" x="0" dy=".71em" style="text-anchor: middle;">10</text></g><g class="tick major" transform="translate(184.6153846153846,0)" style="opacity: 1;"><line y2="6" x2="0"></line><text y="9" x="0" dy=".71em" style="text-anchor: middle;">20</text></g><g class="tick major" transform="translate(276.92307692307696,0)" style="opacity: 1;"><line y2="6" x2="0"></line><text y="9" x="0" dy=".71em" style="text-anchor: middle;">30</text></g><g class="tick major" transform="translate(369.2307692307692,0)" style="opacity: 1;"><line y2="6" x2="0"></line><text y="9" x="0" dy=".71em" style="text-anchor: middle;">40</text></g><g class="tick major" transform="translate(461.53846153846155,0)" style="opacity: 1;"><line y2="6" x2="0"></line><text y="9" x="0" dy=".71em" style="text-anchor: middle;">50</text></g><g class="tick major" transform="translate(553.8461538461539,0)" style="opacity: 1;"><line y2="6" x2="0"></line><text y="9" x="0" dy=".71em" style="text-anchor: middle;">60</text></g><g class="tick major" transform="translate(646.1538461538462,0)" style="opacity: 1;"><line y2="6" x2="0"></line><text y="9" x="0" dy=".71em" style="text-anchor: middle;">70</text></g><g class="tick major" transform="translate(738.4615384615385,0)" style="opacity: 1;"><line y2="6" x2="0"></line><text y="9" x="0" dy=".71em" style="text-anchor: middle;">80</text></g><g class="tick major" transform="translate(830.7692307692308,0)" style="opacity: 1;"><line y2="6" x2="0"></line><text y="9" x="0" dy=".71em" style="text-anchor: middle;">90</text></g><g class="tick major" transform="translate(923.0769230769231,0)" style="opacity: 1;"><line y2="6" x2="0"></line><text y="9" x="0" dy=".71em" style="text-anchor: middle;">100</text></g><path class="domain" d="M0,6V0H960V6"></path></g></g></svg></div>
           </div>
+          <div style="position: absolute; right: 20px;">
+            <input type="button" value="Linear Scale" onclick="ChangeChartScale('linear', 0);">
+            <input type="button" value="Log Scale" onclick="ChangeChartScale('log', 1);">
+          </div>
           <div id="table-container">
             <table class="table table-striped">
               <thead>
@@ -567,7 +571,7 @@
       var getGlobalBounds = function(reviews) {
         console.log("hooray");
         var keys = _.keys(reviews);
-        var maxBound = 0;
+        var max_bound = 0;
         for (var k=0; k<keys.length; k++) {
           var obj1 = reviews[keys[k]];
           var bound1 = 0;
@@ -577,23 +581,35 @@
               bound1 = obj2.time_distance;
             }
           }
-          if (bound1 > maxBound) {
-            maxBound = bound1;
+          if (bound1 > max_bound) {
+            max_bound = bound1;
           }
         }
-        return maxBound;
+        return max_bound;
       };
-      var maxBound = getGlobalBounds($.review_timeline_data);
+
+      var ChangeChartScale = function (scale, offset) {
+        var ky1 = _.keys(chartCollection);
+        for (var ky2=0; ky2<ky1.length; ky2++) {
+          var chart = chartCollection[ky1[ky2]];
+          chart.setScale(scale, offset);
+          chart.updateChart();
+        }
+      };
+
+      var max_bound = getGlobalBounds($.review_timeline_data);
 
       var keys = _.keys($.review_timeline_data);
+      var chartCollection = {};
       for (var kk2=0; kk2<keys.length; kk2++) {
         var attr = keys[kk2];
-        chartLib.startingFunctionSmall($.review_timeline_data[attr],
+        chartCollection[attr] = chartLib.startingFunctionSmall($.review_timeline_data[attr],
                                        attr,
                                        $.review_data[attr].id,
                                        $.review_data[attr],
-                                       $.callback_method
-                                       )
+                                       $.callback_method,
+                                       extra_options={'bounds': { 'min':0, 'max':max_bound}}
+                                       );
       }
 
       $.zoom_chart = chartLib.startingFunctionLarge($.review_timeline_data[$.first_chart_id], "chart-zoom", "zoomed", $.review_data[$.first_chart_id]);

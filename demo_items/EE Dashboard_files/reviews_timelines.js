@@ -80,7 +80,8 @@ chartLib = function() {
 
   };
 
-  function startingFunctionSmall(timeline_data, divname, suffix, review_data, callback) {
+  function startingFunctionSmall(timeline_data, divname, suffix, review_data, callback, extra_options) {
+
     var options = {
       "build_menu": false,
       "multi_graph": false,
@@ -105,12 +106,18 @@ chartLib = function() {
       "infoy": 10,
       "get_info_text": get_info_text,
       "show_event_labels": false,
-      "show_title": false
+      "show_title": false,
+      "scale": 'log',
+      "scale_offset": 1
     };
+
+    if (extra_options) {
+      options = _.extend(options, extra_options);
+    }
     return makeChart(timeline_data, review_data, options);
   }
 
-  function startingFunctionLarge(timeline_data, divname, suffix, review_data, callback) {
+  function startingFunctionLarge(timeline_data, divname, suffix, review_data, callback, extra_options) {
     var options = {
       "build_menu": false,
       "multi_graph": false,
@@ -135,8 +142,14 @@ chartLib = function() {
       "infoy": 10,
       "get_info_text": get_info_text,
       "show_event_labels": true,
-      "show_title": true
+      "show_title": true,
+      "scale": "linear",
+      "scale_offset": 0
     };
+
+    if (extra_options) {
+      options = _.extend(options, extra_options);
+    }
     return makeChart(timeline_data, review_data, options);
   }
 
@@ -144,7 +157,14 @@ chartLib = function() {
     var xAxis = 'Timeline (in minutes)';
     var maxElements = options.max_points;
 
-    var bounds = options.getBounds(data, 1.0);
+
+    var bounds;
+
+    if (options.bounds) {
+      bounds = options.bounds;
+    } else {
+      bounds = options.getBounds(data, 1.0);
+    }
 
     // SVG AND D3 STUFF
     var svg = d3.select(options.element)
@@ -200,13 +220,26 @@ chartLib = function() {
     }
 
     function updateScales() {
-      xScale = d3.scale.linear()
-        .domain([bounds.min, bounds.max])
+      var xscalefunc = d3.scale.linear;
+      var scale_offset = 0;
+
+      if (options.scale === "log") {
+        xscalefunc = d3.scale.log;
+        scale_offset = options.scale_offset;
+      }
+
+      xScale = xscalefunc()
+        .domain([bounds.min+scale_offset, bounds.max+scale_offset])
         .range([0, options.width - 2 * options.translatex]);  // TODO: fix these numbers
 
       yScale = d3.scale.linear()
         .domain([-10, 10])
         .range([options.height, 0]);  // TODO: fix these numbers
+    }
+
+    function setScale(scale, offset) {
+      options.scale = scale;
+      options.scale_offset = offset;
     }
 
     // Render points
@@ -230,7 +263,8 @@ chartLib = function() {
       })
       .attr('x', function (d) {
         var res = options.getter(data, d, 'time_distance');
-        return (res === undefined) ? d3.select(this).attr('x') : xScale(res);
+        res = (res === undefined) ? d3.select(this).attr('x') : xScale(res + options.scale_offset);
+        return res;
       })
       .attr('y', function (d) {
         return yScale(0) - options.tick_height/2;
@@ -255,7 +289,8 @@ chartLib = function() {
         })
         .attr('x', function (d) {
           var res = options.getter(data, d, 'time_distance');
-          return (res === undefined) ? d3.select(this).attr('x') : xScale(res)+(options.tick_width/2);
+          res = (res === undefined) ? d3.select(this).attr('x') : xScale(res + options.scale_offset)+(options.tick_width/2);
+          return res;
         })
         .attr('y', function (d) {
           return yScale(0) - options.tick_height/2;
@@ -298,7 +333,11 @@ chartLib = function() {
     //// RENDERING FUNCTIONS
     function updateChart(init) {
       if (!init) {
-        bounds = options.getBounds(data, 1.0);
+        if (options.bounds) {
+          bounds = options.bounds;
+        } else {
+          bounds = options.getBounds(data, 1.0);
+        }
         updateScales();
       }
 
@@ -313,7 +352,8 @@ chartLib = function() {
         })
         .attr('x', function (d) {
           res = options.getter(data, d, 'time_distance');
-          return (res === undefined) ? d3.select(this).attr('x') : xScale(res);
+          res = (res === undefined) ? d3.select(this).attr('x') : xScale(res  + options.scale_offset);
+          return res;
         })
         .attr('y', function (d) {
           return yScale(0) - options.tick_height/2;
@@ -336,7 +376,7 @@ chartLib = function() {
           })
           .attr('x', function (d) {
             var res = options.getter(data, d, 'time_distance');
-            return (res === undefined) ? d3.select(this).attr('x') : xScale(res) + (options.tick_width / 2);
+            return (res === undefined) ? d3.select(this).attr('x') : xScale(res + options.scale_offset) + (options.tick_width / 2);
           })
           .attr('y', function (d) {
             return yScale(0) - options.tick_height/2 - 5;
@@ -366,7 +406,7 @@ chartLib = function() {
       // Fade in
       d3.select('#backline' + options.id_suffix)
         .style('opacity', 0)
-        .attr({'x1': xScale(mnx), 'y1': yScale(0), 'x2': xScale(mxx), 'y2': yScale(0)})
+        .attr({'x1': xScale(mnx + options.scale_offset), 'y1': yScale(0), 'x2': xScale(mxx + options.scale_offset), 'y2': yScale(0)})
         .transition()
         .duration(500)
         .style('opacity', 1)
@@ -376,9 +416,17 @@ chartLib = function() {
     }
 
     updateChart(true);
-    return {'show_graph': show_graph};
+    return {
+      'show_graph': show_graph,
+      'updateChart': updateChart,
+      'setScale': setScale 
+    };
   };
-  return {'startingFunctionSmall': startingFunctionSmall,
-    'startingFunctionLarge': startingFunctionLarge};
+
+  return {
+      'startingFunctionSmall': startingFunctionSmall,
+      'startingFunctionLarge': startingFunctionLarge
+  };
+
 } ();
 
